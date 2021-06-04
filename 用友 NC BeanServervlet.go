@@ -1,5 +1,5 @@
 package main
-//ico_hash="1085941792"
+
 import (
 	"bufio"
 	"crypto/tls"
@@ -10,6 +10,7 @@ import (
 	"os"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -39,7 +40,7 @@ func Http(url string){
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode == 200 && !strings.HasPrefix(string(body), "<!DOCTYPE"){
-		ret6 := regexp.MustCompile(`\S+\n?`)
+		ret6 := regexp.MustCompile(`root`)
 		alls6 := ret6.FindAllString(string(body), -1)
 		if alls6 != nil{
 			s := url + " >>> " + alls6[0]
@@ -71,7 +72,7 @@ func Https(url string){
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 	if resp.StatusCode == 200 && !strings.HasPrefix(string(body), "<!DOCTYPE"){
-		ret6 := regexp.MustCompile(`\S+\n?`)
+		ret6 := regexp.MustCompile(`root`)
 		alls6 := ret6.FindAllString(string(body), -1)
 		if alls6 != nil{
 			s := url + " >>> " + alls6[0]
@@ -84,7 +85,24 @@ func Https(url string){
 	}
 }
 
+func Url(url <- chan string, wg *sync.WaitGroup){
+	for url := range url{
+		if !strings.HasPrefix(url, "https"){
+				Http("http://" + url)
+		}else{
+			Https(url)
+		}
+	}
+	wg.Done()
+}
+
 func main(){
+	var wg sync.WaitGroup
+	wg.Add(30)
+	ch := make(chan string)
+	for i := 0; i < 30; i++{
+		go Url(ch, &wg)
+	}
 	file, err := os.Open("1.txt")
 	if err != nil{
 		fmt.Println("文件打开失败", err)
@@ -93,17 +111,8 @@ func main(){
 	defer file.Close()
 	buf := bufio.NewScanner(file)
 	for buf.Scan(){
-		url := buf.Text()
-		if !strings.HasPrefix(url, "https"){
-			if strings.HasPrefix(url, "http"){
-				Http(url)
-			}else {
-				Http("http://" + url)
-			}
-		}else{
-			Https(url)
-		}
+		ch <- buf.Text()
 	}
-
-
+	close(ch)
+	wg.Wait()
 }
