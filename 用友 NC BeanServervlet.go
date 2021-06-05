@@ -7,6 +7,7 @@ import (
 	"io"
 	"io/ioutil"
 	"net/http"
+	"runtime"
 	"os"
 	"regexp"
 	"strings"
@@ -97,10 +98,11 @@ func Url(url <- chan string, wg *sync.WaitGroup){
 }
 
 func main(){
+	max := runtime.NumCPU() * 5
 	var wg sync.WaitGroup
-	wg.Add(30)
+	wg.Add(max)
 	ch := make(chan string)
-	for i := 0; i < 30; i++{
+	for i := 0; i < max; i++{
 		go Url(ch, &wg)
 	}
 	file, err := os.Open("1.txt")
