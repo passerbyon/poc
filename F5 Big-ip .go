@@ -1,5 +1,8 @@
 package main
-
+/*
+文件内容http://或https://为开头，不是一以此开头的可自行修改代码
+本程序为多线程批处理，处理文件名，在代码中修改（有点懒）
+*/
 import (
 	"bufio"
 	"bytes"
@@ -88,7 +91,6 @@ func Url(url <- chan string, wg *sync.WaitGroup){
 	wg.Done()
 }
 func main(){
-	//Url("https://120.117.3.108")
 	max := runtime.NumCPU() * 5
 	var wg sync.WaitGroup
 	wg.Add(max)
